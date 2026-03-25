@@ -20,29 +20,24 @@ export async function POST(req: NextRequest) {
 
   if (event.type === "subscription.active") {
     const sub = event.data;
-    const userId = sub.externalCustomerId ?? sub.customerId;
-
-    if (userId) {
-      await supabase.from("subscriptions").upsert({
-        user_id: userId,
+    await supabase.from("subscriptions")
+      .update({
         polar_subscription_id: sub.id,
-        polar_customer_id: sub.customerId,
         status: "active",
         current_period_end: sub.currentPeriodEnd,
         updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
-    }
+      })
+      .eq("polar_customer_id", sub.customerId);
   }
 
   if (event.type === "subscription.canceled" || event.type === "subscription.revoked") {
     const sub = event.data;
-    const userId = sub.externalCustomerId ?? sub.customerId;
-
-    if (userId) {
-      await supabase.from("subscriptions")
-        .update({ status: event.type === "subscription.canceled" ? "canceled" : "revoked", updated_at: new Date().toISOString() })
-        .eq("user_id", userId);
-    }
+    await supabase.from("subscriptions")
+      .update({
+        status: event.type === "subscription.canceled" ? "canceled" : "revoked",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("polar_customer_id", sub.customerId);
   }
 
   return NextResponse.json({ received: true });
