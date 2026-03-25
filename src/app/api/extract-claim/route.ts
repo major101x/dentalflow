@@ -1,14 +1,26 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req: NextRequest) {
   try {
-    const { notes } = await req.json();
+    const { notes, practiceId } = await req.json();
 
     if (!notes || typeof notes !== "string" || notes.trim().length === 0) {
       return NextResponse.json({ error: "Clinical notes are required." }, { status: 400 });
+    }
+
+    if (!practiceId) {
+      return NextResponse.json({ error: "practiceId is required." }, { status: 400 });
+    }
+
+    // Validate session
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
     const result = await client.models.generateContent({
@@ -42,12 +54,22 @@ ${notes}`,
     const raw = result.text ?? "";
     const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
 
+    let claim;
     try {
-      const claim = JSON.parse(cleaned);
-      return NextResponse.json({ claim });
+      claim = JSON.parse(cleaned);
     } catch {
       return NextResponse.json({ error: "Failed to parse AI response.", raw }, { status: 500 });
     }
+
+    // Save to DB
+    await supabase.from("claims").insert({
+      practice_id: practiceId,
+      user_id: user.id,
+      raw_notes: notes,
+      claim_data: claim,
+    });
+
+    return NextResponse.json({ claim });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });
