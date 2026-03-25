@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const polar = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN,
-  server: "sandbox",
+  server: (process.env.POLAR_ENV as "sandbox" | "production") ?? "production",
 });
 
 export async function GET(req: NextRequest) {
