@@ -1,14 +1,13 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireSubscription } from "@/lib/requireSubscription";
 import AddPracticeForm from "./AddPracticeForm";
 import SignOutButton from "./SignOutButton";
+import DeletePracticeButton from "./DeletePracticeButton";
 import Link from "next/link";
 
 export default async function DashboardPage() {
+  const user = await requireSubscription();
   const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
   const { data: practices } = await supabase
     .from("practices")
@@ -57,9 +56,10 @@ export default async function DashboardPage() {
                         <p className="font-semibold text-gray-900">{p.name}</p>
                         {p.npi && <p className="text-xs text-gray-400 mt-0.5">NPI: {p.npi}</p>}
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex flex-col items-end gap-1">
                         <p className="text-2xl font-bold text-blue-600">{countMap[p.id] ?? 0}</p>
                         <p className="text-xs text-gray-400">claims</p>
+                        <DeletePracticeButton practiceId={p.id} />
                       </div>
                     </div>
                   </Link>

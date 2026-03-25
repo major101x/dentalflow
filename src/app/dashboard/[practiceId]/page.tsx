@@ -1,5 +1,6 @@
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireSubscription } from "@/lib/requireSubscription";
 import Link from "next/link";
 import ClaimExtractor from "@/components/ClaimExtractor";
 import ClaimHistory from "./ClaimHistory";
@@ -10,10 +11,8 @@ export default async function PracticePage({
   params: Promise<{ practiceId: string }>;
 }) {
   const { practiceId } = await params;
+  const user = await requireSubscription();
   const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
   const { data: practice } = await supabase
     .from("practices")

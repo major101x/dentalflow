@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type ClaimRow = {
@@ -20,7 +21,20 @@ export default function ClaimHistory({
   initialClaims: ClaimRow[];
   practiceId: string;
 }) {
+  const router = useRouter();
   const [claims, setClaims] = useState<ClaimRow[]>(initialClaims);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
+  async function handleDelete(claimId: string) {
+    setDeletingId(claimId);
+    const supabase = createClient();
+    await supabase.from("claims").delete().eq("id", claimId);
+    setClaims((prev) => prev.filter((c) => c.id !== claimId));
+    setDeletingId(null);
+    setConfirmingId(null);
+    router.refresh();
+  }
 
   useEffect(() => {
     setClaims(initialClaims);
@@ -61,9 +75,31 @@ export default function ClaimHistory({
               {c.claim_data.procedures.map((p) => p.cdtCode).join(", ")}
             </p>
           </div>
-          <div className="text-right">
+          <div className="text-right flex flex-col items-end gap-1">
             <p className="text-xs text-gray-400">{c.claim_data.dateOfService ?? "—"}</p>
-            <p className="text-xs text-gray-300">{new Date(c.created_at).toLocaleDateString()}</p>
+            <p className="text-xs text-gray-300">{c.created_at.slice(0, 10)}</p>
+            {confirmingId === c.id ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">Delete?</span>
+                <button
+                  onClick={() => handleDelete(c.id)}
+                  disabled={deletingId === c.id}
+                  className="text-xs text-red-600 font-semibold hover:underline"
+                >
+                  {deletingId === c.id ? "..." : "Yes"}
+                </button>
+                <button onClick={() => setConfirmingId(null)} className="text-xs text-gray-400 hover:underline">
+                  No
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmingId(c.id)}
+                className="text-xs text-gray-300 hover:text-red-400 transition-colors"
+              >
+                Delete
+              </button>
+            )}
           </div>
         </div>
       ))}
