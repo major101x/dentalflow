@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Button from "@/components/ui/Button";
+import { cardClass } from "@/components/ui/Card";
+import { inputClass } from "@/components/ui/Field";
+import { ArrowRight } from "@/components/ui/icons";
 
 type Procedure = {
   cdtCode: string;
@@ -108,88 +112,113 @@ export default function ClaimExtractor({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Input */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col gap-4">
+      <div className={`${cardClass} p-6 flex flex-col gap-4`}>
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-gray-800">Clinical Notes</h2>
-          <button onClick={() => setNotes(SAMPLE_NOTES)} className="text-xs text-blue-600 hover:underline">
+          <h2 className="gl-label">Clinical notes</h2>
+          <button
+            onClick={() => setNotes(SAMPLE_NOTES)}
+            className="text-xs font-medium text-muted hover:text-ink transition-colors cursor-pointer"
+          >
             Load sample
           </button>
         </div>
         <textarea
-          className="w-full h-72 border border-gray-200 rounded-lg p-3 text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-          placeholder="Paste dentist's clinical notes here..."
+          className={`${inputClass} h-72 font-mono leading-relaxed resize-none`}
+          placeholder="Paste the dentist's clinical notes here…"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />
-        <button
+        <Button
           onClick={handleExtract}
           disabled={loading || !notes.trim() || atLimit}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-2.5 rounded-lg transition-colors"
+          className="w-full"
         >
-          {loading ? "Extracting..." : "Extract Claim"}
-        </button>
+          {loading ? "Extracting…" : "Extract claim"}
+        </Button>
         {!subscribed && !atLimit && (
-          <p className="text-xs text-gray-400 text-center">
-            {remaining} free extraction{remaining === 1 ? "" : "s"} remaining
+          <p className="text-center text-xs text-muted">
+            <span className="font-mono text-ink">{remaining}</span> free extraction
+            {remaining === 1 ? "" : "s"} remaining
           </p>
         )}
         {atLimit ? (
-          <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+          <div className="rounded-md border border-border border-l-2 border-l-accent bg-neutral px-4 py-3 text-sm text-ink">
             {error || "You've used all your free extractions."}{" "}
-            <Link href="/pricing" className="font-semibold underline hover:text-blue-700">
+            <Link
+              href="/pricing"
+              className="group inline-flex items-center gap-1 font-medium text-accent hover:text-accent-hover cursor-pointer"
+            >
               Subscribe to continue
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
         ) : (
-          error && <p className="text-red-500 text-sm">{error}</p>
+          error && <p className="text-sm text-red-600">{error}</p>
         )}
       </div>
 
       {/* Output */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col gap-4">
+      <div className={`${cardClass} p-6 flex flex-col gap-4`}>
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-gray-800">Claim Summary</h2>
+          <h2 className="gl-label">Claim summary</h2>
           {claim && (
-            <button onClick={handleCopy} className="text-xs text-blue-600 hover:underline">
-              {copied ? "Copied!" : "Copy all"}
+            <button
+              onClick={handleCopy}
+              className="text-xs font-medium text-accent hover:text-accent-hover transition-colors cursor-pointer"
+            >
+              {copied ? "Copied" : "Copy all"}
             </button>
           )}
         </div>
 
         {!claim && !loading && (
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-sm h-72">
+          <div className="flex-1 flex items-center justify-center text-sm text-muted h-72">
             Claim details will appear here.
           </div>
         )}
 
         {loading && (
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-sm h-72 animate-pulse">
-            Analyzing notes...
+          <div className="flex-1 flex flex-col gap-3 h-72 animate-pulse" aria-hidden="true">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="h-10 rounded-md bg-neutral" />
+              <div className="h-10 rounded-md bg-neutral" />
+              <div className="h-10 rounded-md bg-neutral" />
+              <div className="h-10 rounded-md bg-neutral" />
+            </div>
+            <div className="h-16 rounded-md bg-neutral" />
+            <div className="h-16 rounded-md bg-neutral" />
           </div>
         )}
 
         {claim && (
-          <div className="text-sm space-y-4 overflow-y-auto max-h-80">
-            <div className="grid grid-cols-2 gap-2">
+          <div className="text-sm space-y-5 overflow-y-auto max-h-80">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               <Field label="Patient" value={claim.patientName} />
-              <Field label="Date of Service" value={claim.dateOfService} />
+              <Field label="Date of service" value={claim.dateOfService} />
               <Field label="Provider" value={claim.provider} />
-              <Field label="Tooth Numbers" value={claim.toothNumbers.join(", ") || null} />
+              <Field label="Tooth numbers" value={claim.toothNumbers.join(", ") || null} />
             </div>
 
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Procedures</p>
+              <p className="gl-label mb-2">Procedures</p>
               <div className="space-y-2">
                 {claim.procedures.map((p, i) => (
-                  <div key={i} className="bg-blue-50 rounded-lg px-3 py-2 flex items-start gap-3">
-                    <span className="font-mono font-bold text-blue-700 text-sm whitespace-nowrap">{p.cdtCode}</span>
-                    <div className="flex-1">
-                      <p className="text-gray-800">{p.description}</p>
-                      <p className="text-gray-400 text-xs">
-                        {p.toothNumber ? `Tooth #${p.toothNumber}` : ""}
-                        {p.toothNumber && p.fee ? " · " : ""}
-                        {p.fee ? `Fee: ${p.fee}` : ""}
-                      </p>
+                  <div
+                    key={i}
+                    className="rounded-md border border-border bg-neutral px-3 py-2 flex items-start gap-3"
+                  >
+                    <span className="font-mono font-medium text-ink text-sm whitespace-nowrap">
+                      {p.cdtCode}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-ink">{p.description}</p>
+                      {(p.toothNumber || p.fee) && (
+                        <p className="text-muted text-xs mt-0.5">
+                          {p.toothNumber ? `Tooth #${p.toothNumber}` : ""}
+                          {p.toothNumber && p.fee ? " · " : ""}
+                          {p.fee ? `Fee: ${p.fee}` : ""}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -197,13 +226,13 @@ export default function ClaimExtractor({
             </div>
 
             {claim.diagnosisCodes.length > 0 && (
-              <Field label="Diagnosis Codes" value={claim.diagnosisCodes.join(", ")} />
+              <Field label="Diagnosis codes" value={claim.diagnosisCodes.join(", ")} />
             )}
 
             {claim.notes && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Notes</p>
-                <p className="text-gray-600">{claim.notes}</p>
+                <p className="gl-label mb-1">Notes</p>
+                <p className="text-muted leading-relaxed">{claim.notes}</p>
               </div>
             )}
           </div>
@@ -216,8 +245,8 @@ export default function ClaimExtractor({
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
-      <p className="text-gray-800">{value || "—"}</p>
+      <p className="gl-label">{label}</p>
+      <p className="text-ink mt-0.5">{value || "—"}</p>
     </div>
   );
 }

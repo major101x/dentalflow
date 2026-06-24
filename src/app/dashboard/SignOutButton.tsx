@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { buttonVariants } from "@/components/ui/Button";
 
 export default function SignOutButton() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function SignOutButton() {
   return (
     <button
       onClick={handleSignOut}
-      className="text-sm text-gray-500 hover:text-gray-800 border border-gray-200 rounded-lg px-3 py-1.5 transition-colors"
+      className={buttonVariants({ variant: "secondary", size: "sm" })}
     >
       Sign out
     </button>

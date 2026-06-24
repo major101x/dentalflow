@@ -59,7 +59,7 @@ export default function ClaimHistory({
 
   if (claims.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 text-center text-gray-400 text-sm">
+      <div className="rounded-lg border border-dashed border-border bg-surface p-10 text-center text-sm text-muted">
         No claims yet. Extract your first claim above.
       </div>
     );
@@ -68,34 +68,35 @@ export default function ClaimHistory({
   return (
     <div className="space-y-2">
       {claims.map((c) => (
-        <div key={c.id} className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center justify-between">
-          <div>
-            <p className="font-medium text-gray-900 text-sm">{c.claim_data.patientName ?? "Unknown patient"}</p>
-            <p className="text-xs text-gray-400 mt-0.5">
+        <div key={c.id} className="bg-surface rounded-lg border border-border px-5 py-3.5 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="font-medium text-ink text-sm truncate">{c.claim_data.patientName ?? "Unknown patient"}</p>
+            <p className="gl-label mt-1 truncate">
               {c.claim_data.procedures.map((p) => p.cdtCode).join(", ")}
             </p>
           </div>
-          <div className="text-right flex flex-col items-end gap-1">
-            <p className="text-xs text-gray-400">{c.claim_data.dateOfService ?? "—"}</p>
-            <p className="text-xs text-gray-300">{c.created_at.slice(0, 10)}</p>
+          <div className="text-right flex flex-col items-end gap-1 shrink-0">
+            <p className="text-xs text-muted">{c.claim_data.dateOfService ?? "—"}</p>
+            <p className="gl-label">{c.created_at.slice(0, 10)}</p>
             {confirmingId === c.id ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">Delete?</span>
+                <span className="text-xs text-muted">Delete?</span>
                 <button
                   onClick={() => handleDelete(c.id)}
                   disabled={deletingId === c.id}
-                  className="text-xs text-red-600 font-semibold hover:underline"
+                  className="text-xs font-medium text-red-600 hover:underline cursor-pointer disabled:opacity-50"
                 >
-                  {deletingId === c.id ? "..." : "Yes"}
+                  {deletingId === c.id ? "…" : "Yes"}
                 </button>
-                <button onClick={() => setConfirmingId(null)} className="text-xs text-gray-400 hover:underline">
+                <button onClick={() => setConfirmingId(null)} className="text-xs text-muted hover:text-ink cursor-pointer">
                   No
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => setConfirmingId(c.id)}
-                className="text-xs text-gray-300 hover:text-red-400 transition-colors"
+                aria-label="Delete claim"
+                className="text-xs text-muted/60 hover:text-red-600 transition-colors cursor-pointer"
               >
                 Delete
               </button>

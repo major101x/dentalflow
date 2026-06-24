@@ -32,27 +32,31 @@ export default async function PracticePage({
     .limit(10);
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <Link href="/dashboard" className="text-gray-400 hover:text-gray-700 text-sm">
+    <main className="min-h-screen">
+      <header className="border-b border-border bg-surface">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5">
+          <Link
+            href="/dashboard"
+            className="gl-label inline-flex items-center gap-1.5 hover:text-ink transition-colors cursor-pointer"
+          >
             ← Practices
           </Link>
-          <span className="text-gray-300">/</span>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{practice.name}</h1>
-            {practice.npi && <p className="text-xs text-gray-400">NPI: {practice.npi}</p>}
+          <div className="mt-2 flex items-baseline gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight text-ink">{practice.name}</h1>
+            {practice.npi && <span className="gl-label">NPI {practice.npi}</span>}
           </div>
         </div>
+      </header>
 
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
         <ClaimExtractor
           practiceId={practiceId}
           subscribed={usage.subscribed}
           remaining={usage.remaining}
         />
 
-        <div className="mt-10">
-          <h2 className="font-semibold text-gray-800 mb-4">Recent Claims</h2>
+        <div className="mt-12">
+          <h2 className="gl-label mb-4">Recent claims</h2>
           <ClaimHistory initialClaims={claims ?? []} practiceId={practiceId} />
         </div>
       </div>

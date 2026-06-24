@@ -3,6 +3,8 @@ import { requireAuth, getUsage, FREE_EXTRACTION_LIMIT } from "@/lib/access";
 import AddPracticeForm from "./AddPracticeForm";
 import SignOutButton from "./SignOutButton";
 import DeletePracticeButton from "./DeletePracticeButton";
+import { interactiveCardClass } from "@/components/ui/Card";
+import { ArrowRight } from "@/components/ui/icons";
 import Link from "next/link";
 
 export default async function DashboardPage() {
@@ -27,23 +29,25 @@ export default async function DashboardPage() {
   });
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">DentalFlow</h1>
-            <p className="text-gray-500 mt-1 text-sm">{user.email}</p>
+    <main className="min-h-screen">
+      <header className="border-b border-border bg-surface">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-baseline gap-3">
+            <span className="text-lg font-semibold tracking-tight text-ink">DentalFlow</span>
+            <span className="gl-label hidden sm:inline">{user.email}</span>
           </div>
           <SignOutButton />
         </div>
+      </header>
 
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
         {!usage.subscribed && (
-          <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-blue-200 bg-blue-50 px-5 py-4">
-            <p className="text-sm text-blue-900">
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-border border-l-2 border-l-accent bg-surface px-5 py-4">
+            <p className="text-sm text-ink">
               {usage.remaining > 0 ? (
                 <>
-                  <span className="font-semibold">{usage.remaining}</span> of{" "}
-                  {FREE_EXTRACTION_LIMIT} free extractions remaining.
+                  <span className="font-mono font-medium text-accent">{usage.remaining}</span>
+                  {" "}of {FREE_EXTRACTION_LIMIT} free extractions remaining.
                 </>
               ) : (
                 <>You&apos;ve used all {FREE_EXTRACTION_LIMIT} free extractions. Subscribe to keep extracting claims.</>
@@ -51,19 +55,22 @@ export default async function DashboardPage() {
             </p>
             <Link
               href="/pricing"
-              className="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+              className="group inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent-hover transition-colors cursor-pointer"
             >
               Subscribe
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-8 gap-y-10">
           <div className="lg:col-span-2">
-            <h2 className="font-semibold text-gray-800 mb-4">Your Practices</h2>
+            <h2 className="gl-label mb-4">Your practices</h2>
             {!practices || practices.length === 0 ? (
-              <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
-                No practices yet. Add your first one →
+              <div className="rounded-lg border border-dashed border-border bg-surface p-10 text-center">
+                <p className="text-sm text-muted">
+                  No practices yet. Add your first one to start extracting claims.
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -71,16 +78,22 @@ export default async function DashboardPage() {
                   <Link
                     key={p.id}
                     href={`/dashboard/${p.id}`}
-                    className="block bg-white rounded-xl border border-gray-200 p-4 hover:border-blue-300 hover:shadow-sm transition-all"
+                    className={`group block ${interactiveCardClass} p-5`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-gray-900">{p.name}</p>
-                        {p.npi && <p className="text-xs text-gray-400 mt-0.5">NPI: {p.npi}</p>}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="font-medium text-ink truncate">{p.name}</p>
+                        {p.npi && (
+                          <p className="gl-label mt-1">NPI {p.npi}</p>
+                        )}
                       </div>
-                      <div className="text-right flex flex-col items-end gap-1">
-                        <p className="text-2xl font-bold text-blue-600">{countMap[p.id] ?? 0}</p>
-                        <p className="text-xs text-gray-400">claims</p>
+                      <div className="flex items-center gap-5 shrink-0">
+                        <div className="text-right">
+                          <p className="text-2xl font-semibold tabular-nums text-ink leading-none">
+                            {countMap[p.id] ?? 0}
+                          </p>
+                          <p className="gl-label mt-1">claims</p>
+                        </div>
                         <DeletePracticeButton practiceId={p.id} />
                       </div>
                     </div>
@@ -91,7 +104,7 @@ export default async function DashboardPage() {
           </div>
 
           <div>
-            <h2 className="font-semibold text-gray-800 mb-4">Add Practice</h2>
+            <h2 className="gl-label mb-4">Add practice</h2>
             <AddPracticeForm userId={user.id} />
           </div>
         </div>
