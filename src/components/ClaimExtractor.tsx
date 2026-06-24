@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type Procedure = {
   cdtCode: string;
@@ -35,13 +36,24 @@ Exam findings:
 
 Plan: Return in 3 weeks for crown seat #19. Monitor #3.`;
 
-export default function ClaimExtractor({ practiceId }: { practiceId: string }) {
+export default function ClaimExtractor({
+  practiceId,
+  subscribed,
+  remaining,
+}: {
+  practiceId: string;
+  subscribed: boolean;
+  remaining: number;
+}) {
   const router = useRouter();
   const [notes, setNotes] = useState("");
   const [claim, setClaim] = useState<Claim | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [limitReached, setLimitReached] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const atLimit = !subscribed && (remaining <= 0 || limitReached);
 
   async function handleExtract() {
     setLoading(true);
@@ -55,6 +67,11 @@ export default function ClaimExtractor({ practiceId }: { practiceId: string }) {
         body: JSON.stringify({ notes, practiceId }),
       });
       const data = await res.json();
+      if (res.status === 402) {
+        setLimitReached(true);
+        setError(data.error || "Free extraction limit reached.");
+        return;
+      }
       if (!res.ok) throw new Error(data.error || "Something went wrong.");
       setClaim(data.claim);
       router.refresh();
@@ -106,12 +123,26 @@ export default function ClaimExtractor({ practiceId }: { practiceId: string }) {
         />
         <button
           onClick={handleExtract}
-          disabled={loading || !notes.trim()}
+          disabled={loading || !notes.trim() || atLimit}
           className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-2.5 rounded-lg transition-colors"
         >
           {loading ? "Extracting..." : "Extract Claim"}
         </button>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+        {!subscribed && !atLimit && (
+          <p className="text-xs text-gray-400 text-center">
+            {remaining} free extraction{remaining === 1 ? "" : "s"} remaining
+          </p>
+        )}
+        {atLimit ? (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+            {error || "You've used all your free extractions."}{" "}
+            <Link href="/pricing" className="font-semibold underline hover:text-blue-700">
+              Subscribe to continue
+            </Link>
+          </div>
+        ) : (
+          error && <p className="text-red-500 text-sm">{error}</p>
+        )}
       </div>
 
       {/* Output */}

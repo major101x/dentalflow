@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getUsage } from "@/lib/access";
 
 const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -21,6 +22,18 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    // Enforce the free-extraction limit before spending a Gemini call.
+    const usage = await getUsage(supabase, user.id);
+    if (!usage.canExtract) {
+      return NextResponse.json(
+        {
+          error: "You've used all 5 free extractions. Subscribe to keep extracting claims.",
+          code: "limit_reached",
+        },
+        { status: 402 }
+      );
     }
 
     const result = await client.models.generateContent({

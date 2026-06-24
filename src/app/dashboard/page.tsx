@@ -1,13 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
-import { requireSubscription } from "@/lib/requireSubscription";
+import { requireAuth, getUsage, FREE_EXTRACTION_LIMIT } from "@/lib/access";
 import AddPracticeForm from "./AddPracticeForm";
 import SignOutButton from "./SignOutButton";
 import DeletePracticeButton from "./DeletePracticeButton";
 import Link from "next/link";
 
 export default async function DashboardPage() {
-  const user = await requireSubscription();
+  const user = await requireAuth();
   const supabase = await createClient();
+  const usage = await getUsage(supabase, user.id);
 
   const { data: practices } = await supabase
     .from("practices")
@@ -35,6 +36,27 @@ export default async function DashboardPage() {
           </div>
           <SignOutButton />
         </div>
+
+        {!usage.subscribed && (
+          <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-blue-200 bg-blue-50 px-5 py-4">
+            <p className="text-sm text-blue-900">
+              {usage.remaining > 0 ? (
+                <>
+                  <span className="font-semibold">{usage.remaining}</span> of{" "}
+                  {FREE_EXTRACTION_LIMIT} free extractions remaining.
+                </>
+              ) : (
+                <>You&apos;ve used all {FREE_EXTRACTION_LIMIT} free extractions. Subscribe to keep extracting claims.</>
+              )}
+            </p>
+            <Link
+              href="/pricing"
+              className="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+            >
+              Subscribe
+            </Link>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">

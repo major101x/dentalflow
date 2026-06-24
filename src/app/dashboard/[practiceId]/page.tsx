@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requireSubscription } from "@/lib/requireSubscription";
+import { requireAuth, getUsage } from "@/lib/access";
 import Link from "next/link";
 import ClaimExtractor from "@/components/ClaimExtractor";
 import ClaimHistory from "./ClaimHistory";
@@ -11,8 +11,9 @@ export default async function PracticePage({
   params: Promise<{ practiceId: string }>;
 }) {
   const { practiceId } = await params;
-  const user = await requireSubscription();
+  const user = await requireAuth();
   const supabase = await createClient();
+  const usage = await getUsage(supabase, user.id);
 
   const { data: practice } = await supabase
     .from("practices")
@@ -44,7 +45,11 @@ export default async function PracticePage({
           </div>
         </div>
 
-        <ClaimExtractor practiceId={practiceId} />
+        <ClaimExtractor
+          practiceId={practiceId}
+          subscribed={usage.subscribed}
+          remaining={usage.remaining}
+        />
 
         <div className="mt-10">
           <h2 className="font-semibold text-gray-800 mb-4">Recent Claims</h2>

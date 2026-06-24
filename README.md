@@ -50,7 +50,7 @@ flowchart TD
 
     subgraph Next["Next.js 16 App (Vercel)"]
         MW["middleware.ts<br/>auth gate, redirects to /login"]
-        Pages["Server Components<br/>/dashboard, /dashboard/[practiceId]<br/>guarded by requireSubscription()"]
+        Pages["Server Components<br/>/dashboard, /dashboard/[practiceId]<br/>guarded by requireAuth()"]
         subgraph API["Route Handlers"]
             Extract["/api/extract-claim"]
             Checkout["/api/checkout<br/>/api/checkout/confirm"]
@@ -78,8 +78,8 @@ flowchart TD
 
 **How access control works**
 
-1. Authentication: [`middleware.ts`](middleware.ts) refreshes the Supabase session on every non-static request and redirects unauthenticated users to `/login`. A small whitelist (`/login`, `/pricing`, checkout and webhook routes) stays public.
-2. Subscription: protected pages call [`requireSubscription()`](src/lib/requireSubscription.ts), which redirects to `/pricing` unless the user has an `active` row in the `subscriptions` table. Middleware checks auth only; the paywall is enforced at the page level.
+1. Authentication: [`middleware.ts`](middleware.ts) refreshes the Supabase session on every non-static request and redirects unauthenticated users to `/login`. A small whitelist (`/login`, `/pricing`, checkout and webhook routes) stays public. Pages then call [`requireAuth()`](src/lib/access.ts) to require a signed-in user.
+2. Freemium limit: every account gets 5 free claim extractions, after which a subscription is required. [`getUsage()`](src/lib/access.ts) counts the user's `claims` rows, and `POST /api/extract-claim` returns HTTP 402 once the limit is reached (unless the user has an `active` row in `subscriptions`). The limit is enforced server-side, before any AI call; the UI just shows the remaining count and a Subscribe prompt.
 
 **Billing lifecycle:** `/api/checkout` creates a Polar checkout and, on return, `/api/checkout/confirm` immediately upserts an active subscription so access is granted without waiting. The `/api/webhooks/polar` handler is the long-term source of truth, updating subscription status on Polar's `subscription.active`, `canceled`, and `revoked` events.
 
